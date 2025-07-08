@@ -6,6 +6,10 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import tradingRoutes from './routes/trading.js';
 import { handleSocketConnection } from './sockets/tradingSocket.js';
+import { initMarketDataSocket } from './sockets/marketDataSocket.js';
+
+import yahooFinance from 'yahoo-finance2';
+
 
 dotenv.config();
 
@@ -90,6 +94,10 @@ app.use((error, req, res, next) => {
     message: error.message
   });
 });
+
+// Market Data WebSocket relay setup
+initMarketDataSocket(io);
+
 
 const PORT = process.env.PORT || 3001;
 

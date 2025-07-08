@@ -8,6 +8,8 @@ import OrdersTable from '../components/OrdersTable';
 import ChildAccountManager from '../components/ChildAccountManager';
 import RealTimeOrderBook from '../components/RealTimeOrderBook';
 import { Activity, Wifi, WifiOff, Users, User, DollarSign, TrendingUp, Settings, Zap } from 'lucide-react';
+import RealTimeMarketData from '../components/RealTimeMarketData';
+import AutoTradingStrategy from '../components/AutoTradingStrategy';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -48,7 +50,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 p-4">
-      <div className="max-w-7xl mx-auto">
+      <div >
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -82,7 +84,7 @@ const DashboardPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
                 <div className="flex items-center justify-center space-x-2 mb-2">
@@ -93,7 +95,7 @@ const DashboardPage: React.FC = () => {
                   {formatCurrency(portfolio.total_value)}
                 </div>
               </div>
-              
+
               <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <TrendingUp className="h-5 w-5 text-blue-400" />
@@ -105,24 +107,27 @@ const DashboardPage: React.FC = () => {
               </div>
             </div>
           </div>
+
         </div>
+
 
         {/* Main Content */}
         <div className="trading-grid">
           {/* Trading Panel */}
           <div className="space-y-6">
+
+            <AutoTradingStrategy />
             <TradingPanel />
-            
+
             {/* Tabs */}
             <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700">
               <div className="flex border-b border-gray-700 overflow-x-auto">
                 <button
                   onClick={() => setActiveTab('realtime')}
-                  className={`flex-1 py-4 px-6 font-medium text-center transition-colors whitespace-nowrap ${
-                    activeTab === 'realtime'
-                      ? 'text-blue-400 border-b-2 border-blue-400'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={`flex-1 py-4 px-6 font-medium text-center transition-colors whitespace-nowrap ${activeTab === 'realtime'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-gray-400 hover:text-white'
+                    }`}
                 >
                   <div className="flex items-center justify-center space-x-2">
                     <Zap className="h-4 w-4" />
@@ -131,38 +136,35 @@ const DashboardPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setActiveTab('positions')}
-                  className={`flex-1 py-4 px-6 font-medium text-center transition-colors whitespace-nowrap ${
-                    activeTab === 'positions'
-                      ? 'text-blue-400 border-b-2 border-blue-400'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={`flex-1 py-4 px-6 font-medium text-center transition-colors whitespace-nowrap ${activeTab === 'positions'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-gray-400 hover:text-white'
+                    }`}
                 >
                   Positions
                 </button>
                 <button
                   onClick={() => setActiveTab('orders')}
-                  className={`flex-1 py-4 px-6 font-medium text-center transition-colors whitespace-nowrap ${
-                    activeTab === 'orders'
-                      ? 'text-blue-400 border-b-2 border-blue-400'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={`flex-1 py-4 px-6 font-medium text-center transition-colors whitespace-nowrap ${activeTab === 'orders'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-gray-400 hover:text-white'
+                    }`}
                 >
                   Order Book
                 </button>
                 {user?.role === 'parent' && (
                   <button
                     onClick={() => setActiveTab('children')}
-                    className={`flex-1 py-4 px-6 font-medium text-center transition-colors whitespace-nowrap ${
-                      activeTab === 'children'
-                        ? 'text-blue-400 border-b-2 border-blue-400'
-                        : 'text-gray-400 hover:text-white'
-                    }`}
+                    className={`flex-1 py-4 px-6 font-medium text-center transition-colors whitespace-nowrap ${activeTab === 'children'
+                      ? 'text-blue-400 border-b-2 border-blue-400'
+                      : 'text-gray-400 hover:text-white'
+                      }`}
                   >
                     Child Accounts
                   </button>
                 )}
               </div>
-              
+
               <div className="p-6">
                 {activeTab === 'realtime' && <RealTimeOrderBook />}
                 {activeTab === 'positions' && <PositionsTable />}
@@ -180,7 +182,7 @@ const DashboardPage: React.FC = () => {
                 <h3 className="text-lg font-semibold text-white">System Status</h3>
                 <Activity className="h-5 w-5 text-blue-400" />
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">WebSocket</span>
@@ -188,17 +190,17 @@ const DashboardPage: React.FC = () => {
                     {isConnected ? 'Connected' : 'Disconnected'}
                   </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Upstox API</span>
                   <span className="text-sm text-green-400">Active</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Environment</span>
                   <span className="text-sm text-yellow-400">Sandbox</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Copy Trading</span>
                   <span className={`text-sm ${user?.role === 'parent' ? 'text-green-400' : 'text-blue-400'}`}>
@@ -214,23 +216,23 @@ const DashboardPage: React.FC = () => {
                 <h3 className="text-lg font-semibold text-white">Account Info</h3>
                 <Settings className="h-5 w-5 text-gray-400" />
               </div>
-              
+
               <div className="space-y-3">
                 <div>
                   <span className="text-gray-400 text-sm">User ID</span>
                   <p className="text-white font-medium font-mono text-sm">{user?.user_id}</p>
                 </div>
-                
+
                 <div>
                   <span className="text-gray-400 text-sm">Name</span>
                   <p className="text-white font-medium">{user?.user_name || 'Demo User'}</p>
                 </div>
-                
+
                 <div>
                   <span className="text-gray-400 text-sm">Email</span>
                   <p className="text-white font-medium">{user?.email || 'demo@example.com'}</p>
                 </div>
-                
+
                 <div>
                   <span className="text-gray-400 text-sm">Exchanges</span>
                   <div className="flex flex-wrap gap-1 mt-1">
@@ -248,7 +250,7 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {/* Copy Trading Status */}
-            {user?.role === 'parent' && (
+            {/* {user?.role === 'parent' && (
               <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
                 <h3 className="text-lg font-semibold text-white mb-4">Copy Trading</h3>
                 <div className="text-center">
@@ -264,7 +266,7 @@ const DashboardPage: React.FC = () => {
                   </button>
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Real-time Updates */}
             <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">

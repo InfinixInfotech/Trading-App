@@ -14,7 +14,7 @@ export const authenticateToken = (req, res, next) => {
     req.user = {
       user_id: `user_${token.substring(0, 8)}`,
       access_token: token,
-      role: token.includes('parent') ? 'parent' : 'child' // Simple role detection for demo
+      role: 'parent',
     };
     next();
   } catch (error) {

@@ -39,7 +39,7 @@ const TradingPanel: React.FC = () => {
     try {
       const status = await tradingService.checkAuthStatus();
       setAuthStatus(status);
-      
+
       if (status.needsLogin) {
         setMessage({
           type: 'warning',
@@ -77,25 +77,25 @@ const TradingPanel: React.FC = () => {
       setIsValidatingToken(true);
       await tradingService.validateToken(false); // Don't redirect
       console.log('✅ Token validation successful');
-      setMessage({ 
-        type: 'info', 
-        text: 'Session validated successfully' 
+      setMessage({
+        type: 'info',
+        text: 'Session validated successfully'
       });
       setAuthStatus({ isValid: true, needsLogin: false });
       setTimeout(() => setMessage(null), 3000);
     } catch (error: any) {
       console.error('❌ Token validation failed:', error);
-      
+
       if (error.isTokenExpired) {
         setAuthStatus({ isValid: false, needsLogin: true, error: error.message });
-        setMessage({ 
-          type: 'warning', 
-          text: 'Your session has expired. Please login again to continue trading.' 
+        setMessage({
+          type: 'warning',
+          text: 'Your session has expired. Please login again to continue trading.'
         });
       } else {
-        setMessage({ 
-          type: 'error', 
-          text: `Validation failed: ${error.message}` 
+        setMessage({
+          type: 'error',
+          text: `Validation failed: ${error.message}`
         });
       }
     } finally {
@@ -112,77 +112,77 @@ const TradingPanel: React.FC = () => {
 
     // Mock search results with proper instrument tokens and current prices
     const mockResults = [
-      { 
-        instrument_token: 'NSE_EQ|INE002A01018', 
-        trading_symbol: 'RELIANCE', 
-        name: 'Reliance Industries Ltd', 
+      {
+        instrument_token: 'NSE_EQ|INE002A01018',
+        trading_symbol: 'RELIANCE',
+        name: 'Reliance Industries Ltd',
         exchange: 'NSE',
         last_price: 2475.25
       },
-      { 
-        instrument_token: 'NSE_EQ|INE467B01029', 
-        trading_symbol: 'TCS', 
-        name: 'Tata Consultancy Services Ltd', 
+      {
+        instrument_token: 'NSE_EQ|INE467B01029',
+        trading_symbol: 'TCS',
+        name: 'Tata Consultancy Services Ltd',
         exchange: 'NSE',
         last_price: 3650.80
       },
-      { 
-        instrument_token: 'NSE_EQ|INE009A01021', 
-        trading_symbol: 'INFY', 
-        name: 'Infosys Ltd', 
+      {
+        instrument_token: 'NSE_EQ|INE009A01021',
+        trading_symbol: 'INFY',
+        name: 'Infosys Ltd',
         exchange: 'NSE',
         last_price: 1789.45
       },
-      { 
-        instrument_token: 'NSE_EQ|INE040A01034', 
-        trading_symbol: 'HDFCBANK', 
-        name: 'HDFC Bank Ltd', 
+      {
+        instrument_token: 'NSE_EQ|INE040A01034',
+        trading_symbol: 'HDFCBANK',
+        name: 'HDFC Bank Ltd',
         exchange: 'NSE',
         last_price: 1654.30
       },
-      { 
-        instrument_token: 'NSE_EQ|INE030A01027', 
-        trading_symbol: 'ICICIBANK', 
-        name: 'ICICI Bank Ltd', 
+      {
+        instrument_token: 'NSE_EQ|INE030A01027',
+        trading_symbol: 'ICICIBANK',
+        name: 'ICICI Bank Ltd',
         exchange: 'NSE',
         last_price: 1198.75
       },
-      { 
-        instrument_token: 'NSE_EQ|INE256A01028', 
-        trading_symbol: 'ZOMATO', 
-        name: 'Zomato Ltd', 
+      {
+        instrument_token: 'NSE_EQ|INE256A01028',
+        trading_symbol: 'ZOMATO',
+        name: 'Zomato Ltd',
         exchange: 'NSE',
         last_price: 267.85
       },
-      { 
-        instrument_token: 'NSE_EQ|INE758T01015', 
-        trading_symbol: 'IRCTC', 
-        name: 'Indian Railway Catering And Tourism Corporation Ltd', 
+      {
+        instrument_token: 'NSE_EQ|INE758T01015',
+        trading_symbol: 'IRCTC',
+        name: 'Indian Railway Catering And Tourism Corporation Ltd',
         exchange: 'NSE',
         last_price: 789.20
       },
-      { 
-        instrument_token: 'NSE_EQ|INE155A01022', 
-        trading_symbol: 'TATAMOTORS', 
-        name: 'Tata Motors Ltd', 
+      {
+        instrument_token: 'NSE_EQ|INE155A01022',
+        trading_symbol: 'TATAMOTORS',
+        name: 'Tata Motors Ltd',
         exchange: 'NSE',
         last_price: 789.50
       },
-      { 
-        instrument_token: 'NSE_EQ|INE018A01030', 
-        trading_symbol: 'WIPRO', 
-        name: 'Wipro Ltd', 
+      {
+        instrument_token: 'NSE_EQ|INE018A01030',
+        trading_symbol: 'WIPRO',
+        name: 'Wipro Ltd',
         exchange: 'NSE',
         last_price: 567.30
       },
-      { 
-        instrument_token: 'NSE_EQ|INE062A01020', 
-        trading_symbol: 'BPCL', 
-        name: 'Bharat Petroleum Corporation Ltd', 
+      {
+        instrument_token: 'NSE_EQ|INE062A01020',
+        trading_symbol: 'BPCL',
+        name: 'Bharat Petroleum Corporation Ltd',
         exchange: 'NSE',
         last_price: 289.75
       }
-    ].filter(item => 
+    ].filter(item =>
       item.trading_symbol.toLowerCase().includes(query.toLowerCase()) ||
       item.name.toLowerCase().includes(query.toLowerCase())
     );
@@ -192,16 +192,16 @@ const TradingPanel: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check if user needs to login first
     if (authStatus?.needsLogin) {
-      setMessage({ 
-        type: 'error', 
-        text: 'Please login again before placing orders.' 
+      setMessage({
+        type: 'error',
+        text: 'Please login again before placing orders.'
       });
       return;
     }
-    
+
     if (!orderForm.trading_symbol || !orderForm.quantity || !orderForm.price) {
       setMessage({ type: 'error', text: 'Please fill in all required fields' });
       return;
@@ -246,10 +246,10 @@ const TradingPanel: React.FC = () => {
         tag: ''
       });
 
-      const successMessage = user?.role === 'parent' 
-        ? 'Order placed successfully! It will be copied to all child accounts.' 
+      const successMessage = user?.role === 'parent'
+        ? 'Order placed successfully! It will be copied to all child accounts.'
         : 'Order placed successfully!';
-      
+
       setMessage({ type: 'success', text: successMessage });
 
       // Clear success message after 5 seconds
@@ -257,9 +257,9 @@ const TradingPanel: React.FC = () => {
 
     } catch (error: any) {
       console.error('Order placement failed:', error);
-      
+
       let errorMessage = 'Failed to place order. Please try again.';
-      
+
       // Handle different types of errors
       if (error.isTokenExpired) {
         setAuthStatus({ isValid: false, needsLogin: true, error: error.message });
@@ -287,7 +287,7 @@ const TradingPanel: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setOrderForm({
@@ -341,6 +341,9 @@ const TradingPanel: React.FC = () => {
       </div>
     );
   }
+
+
+
 
   return (
     <div className="bg-gray-800 rounded-lg shadow-lg p-6">
@@ -404,15 +407,14 @@ const TradingPanel: React.FC = () => {
       )}
 
       {message && (
-        <div className={`mb-4 p-3 rounded-md flex items-center space-x-2 ${
-          message.type === 'success' 
-            ? 'bg-green-900 bg-opacity-50 text-green-300 border border-green-700' 
+        <div className={`mb-4 p-3 rounded-md flex items-center space-x-2 ${message.type === 'success'
+            ? 'bg-green-900 bg-opacity-50 text-green-300 border border-green-700'
             : message.type === 'info'
-            ? 'bg-blue-900 bg-opacity-50 text-blue-300 border border-blue-700'
-            : message.type === 'warning'
-            ? 'bg-yellow-900 bg-opacity-50 text-yellow-300 border border-yellow-700'
-            : 'bg-red-900 bg-opacity-50 text-red-300 border border-red-700'
-        }`}>
+              ? 'bg-blue-900 bg-opacity-50 text-blue-300 border border-blue-700'
+              : message.type === 'warning'
+                ? 'bg-yellow-900 bg-opacity-50 text-yellow-300 border border-yellow-700'
+                : 'bg-red-900 bg-opacity-50 text-red-300 border border-red-700'
+          }`}>
           <AlertCircle className="h-4 w-4" />
           <span className="text-sm">{message.text}</span>
         </div>
@@ -437,7 +439,7 @@ const TradingPanel: React.FC = () => {
             />
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           </div>
-          
+
           {showSearch && searchResults.length > 0 && !authStatus?.needsLogin && (
             <div className="absolute z-10 w-full mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
               {searchResults.map((instrument) => (
@@ -675,19 +677,19 @@ const TradingPanel: React.FC = () => {
             <div>Trading Symbol: <span className="font-mono">{orderForm.trading_symbol}</span></div>
             <div>Order Data Preview:</div>
             <pre className="mt-2 text-xs bg-gray-800 p-2 rounded overflow-x-auto">
-{JSON.stringify({
-  quantity: parseInt(orderForm.quantity) || 0,
-  product: orderForm.product,
-  validity: orderForm.validity,
-  price: parseFloat(orderForm.price) || 0,
-  instrument_token: orderForm.instrument_token,
-  order_type: orderForm.order_type,
-  transaction_type: orderForm.transaction_type,
-  disclosed_quantity: parseInt(orderForm.disclosed_quantity) || 0,
-  trigger_price: parseFloat(orderForm.trigger_price) || 0,
-  is_amo: orderForm.is_amo,
-  slice: orderForm.slice
-}, null, 2)}
+              {JSON.stringify({
+                quantity: parseInt(orderForm.quantity) || 0,
+                product: orderForm.product,
+                validity: orderForm.validity,
+                price: parseFloat(orderForm.price) || 0,
+                instrument_token: orderForm.instrument_token,
+                order_type: orderForm.order_type,
+                transaction_type: orderForm.transaction_type,
+                disclosed_quantity: parseInt(orderForm.disclosed_quantity) || 0,
+                trigger_price: parseFloat(orderForm.trigger_price) || 0,
+                is_amo: orderForm.is_amo,
+                slice: orderForm.slice
+              }, null, 2)}
             </pre>
           </div>
         </div>
