@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, TrendingUp, Users, User } from 'lucide-react';
+import { LogOut, TrendingUp, Users, User, Brain, BarChart3 } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -20,6 +20,33 @@ const Navbar: React.FC = () => {
               <TrendingUp className="h-8 w-8 text-blue-400" />
               <span className="text-xl font-bold text-white">Upstox Copy Trading</span>
             </Link>
+            
+            {user && (
+              <div className="ml-8 flex items-center space-x-6">
+                <Link
+                  to="/dashboard"
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname === '/dashboard'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Dashboard</span>
+                </Link>
+                <Link
+                  to="/auto-trading"
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname === '/auto-trading'
+                      ? 'bg-purple-600 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  <Brain className="h-4 w-4" />
+                  <span>Auto Trading</span>
+                </Link>
+              </div>
+            )}
           </div>
 
           {user && (
