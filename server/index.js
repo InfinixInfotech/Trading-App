@@ -5,6 +5,7 @@ import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import tradingRoutes from './routes/trading.js';
+import strategiesRoutes from './routes/strategies.js';
 import { handleSocketConnection } from './sockets/tradingSocket.js';
 import { initMarketDataSocket } from './sockets/marketDataSocket.js';
 
@@ -55,6 +56,7 @@ console.log('🔧 Environment Configuration:', {
 // Routes
 app.use('/auth', authRoutes);
 app.use('/trading', tradingRoutes);
+app.use('/strategies', strategiesRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

@@ -5,6 +5,7 @@ import { SocketProvider } from './contexts/SocketContext';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AutoTradingPage from './pages/AutoTradingPage';
+import StrategyPage from './pages/StrategyPage';
 import AuthCallback from './pages/AuthCallback';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
@@ -26,6 +27,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AutoTradingPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/strategies"
+                element={
+                  <ProtectedRoute>
+                    <StrategyPage />
                   </ProtectedRoute>
                 }
               />

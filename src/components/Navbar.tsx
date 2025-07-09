@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, TrendingUp, Users, User, Brain, BarChart3 } from 'lucide-react';
+import { LogOut, TrendingUp, Users, User, Brain, BarChart3, Target } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -44,6 +44,17 @@ const Navbar: React.FC = () => {
                 >
                   <Brain className="h-4 w-4" />
                   <span>Auto Trading</span>
+                </Link>
+                <Link
+                  to="/strategies"
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname === '/strategies'
+                      ? 'bg-green-600 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  <Target className="h-4 w-4" />
+                  <span>Strategies</span>
                 </Link>
               </div>
             )}
