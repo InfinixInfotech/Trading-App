@@ -50,7 +50,9 @@ console.log('🔧 Environment Configuration:', {
   PORT: process.env.PORT,
   UPSTOX_CLIENT_ID: process.env.UPSTOX_CLIENT_ID ? '***' : 'NOT SET',
   UPSTOX_CLIENT_SECRET: process.env.UPSTOX_CLIENT_SECRET ? '***' : 'NOT SET',
-  UPSTOX_REDIRECT_URI: process.env.UPSTOX_REDIRECT_URI
+  UPSTOX_REDIRECT_URI: process.env.UPSTOX_REDIRECT_URI,
+  UPSTOX_ENV: process.env.UPSTOX_ENV || 'sandbox',
+  SYSTEM_ACCESS_TOKEN: process.env.SYSTEM_ACCESS_TOKEN ? '***' : 'NOT SET'
 });
 
 // Routes

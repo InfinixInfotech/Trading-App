@@ -53,15 +53,39 @@ const StrategyPage: React.FC = () => {
     initializeStrategies();
     fetchSystemStatus();
     
-    // Set up real-time updates
+    // Set up real-time updates and trade notifications
     const interval = setInterval(() => {
       if (isAutoTradingEnabled) {
         fetchMarketData();
         fetchSystemStatus();
       }
     }, 5000);
+    
+    // Listen for real trade executions
+    const socket = io(import.meta.env.VITE_API_URL);
+    
+    socket.on('real_trade_executed', (tradeData) => {
+      console.log('🎯 Real trade executed:', tradeData);
+      
+      // Show notification
+      const notification = `✅ REAL TRADE: ${tradeData.action} ${tradeData.quantity} ${tradeData.symbol} at ₹${tradeData.price.toFixed(2)}`;
+      
+      // You can add a toast notification here
+      alert(notification); // Simple alert for now
+      
+      // Update logs
+      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${notification}`]);
+    });
+    
+    socket.on('trading_signal', (signalData) => {
+      console.log('📊 Trading signal:', signalData);
+      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] 📊 Signal: ${signalData.action} ${signalData.symbol} at ₹${signalData.price.toFixed(2)} (${signalData.confidence}%)`]);
+    });
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      socket.disconnect();
+    };
   }, [isAutoTradingEnabled]);
 
   const initializeStrategies = async () => {

@@ -3,6 +3,7 @@ import cron from 'node-cron';
 import yahooFinance from 'yahoo-finance2';
 import { authenticateToken } from '../middleware/auth.js';
 import { io } from '../index.js';
+import { tradingService } from './trading.js';
 
 const router = express.Router();
 
@@ -230,7 +231,7 @@ const evaluateStrategy = (strategy) => {
 };
 
 // Auto trading logic
-const executeAutoTrading = async () => {
+const executeAutoTrading = async (req) => {
   if (!systemStatus.autoTradingEnabled) return;
   
   const activeStrategies = Array.from(strategies.values()).filter(s => s.enabled);
@@ -261,8 +262,37 @@ const executeAutoTrading = async () => {
           systemStatus.logs.shift();
         }
         
-        // In a real implementation, place the actual trade here
-        console.log(`🎯 ${logMessage}`);
+        // 🚀 REAL TRADE EXECUTION - Place actual trade within 2 minutes
+        try {
+          const tradeResult = await executeRealTrade(strategy, signal);
+          if (tradeResult.success) {
+            const tradeLogMessage = `[${new Date().toLocaleTimeString()}] ✅ REAL TRADE EXECUTED: ${signal.action} ${strategy.parameters.quantity} ${strategy.symbol} at ₹${signal.price.toFixed(2)} - Order ID: ${tradeResult.orderId}`;
+            systemStatus.logs.push(tradeLogMessage);
+            console.log(`🎯 ${tradeLogMessage}`);
+            
+            // Update performance with real trade
+            strategy.performance.totalTrades++;
+            
+            // Emit real trade notification
+            io.emit('real_trade_executed', {
+              strategy: strategy.name,
+              symbol: strategy.symbol,
+              action: signal.action,
+              quantity: strategy.parameters.quantity,
+              price: signal.price,
+              orderId: tradeResult.orderId,
+              timestamp: signal.timestamp
+            });
+          } else {
+            const errorLogMessage = `[${new Date().toLocaleTimeString()}] ❌ TRADE FAILED: ${strategy.name} - ${tradeResult.error}`;
+            systemStatus.logs.push(errorLogMessage);
+            console.error(`❌ ${errorLogMessage}`);
+          }
+        } catch (tradeError) {
+          const errorLogMessage = `[${new Date().toLocaleTimeString()}] ❌ TRADE ERROR: ${strategy.name} - ${tradeError.message}`;
+          systemStatus.logs.push(errorLogMessage);
+          console.error(`❌ ${errorLogMessage}`);
+        }
         
         // Emit signal to connected clients
         io.emit('trading_signal', {
@@ -274,30 +304,225 @@ const executeAutoTrading = async () => {
           timestamp: signal.timestamp
         });
         
-        // Simulate trade execution and update performance
-        const isWin = Math.random() > 0.4; // 60% win rate simulation
-        const pnlAmount = isWin ? 
-          Math.random() * strategy.parameters.takeProfit * strategy.parameters.quantity :
-          -Math.random() * strategy.parameters.stopLoss * strategy.parameters.quantity;
-        
-        strategy.performance.totalTrades++;
-        strategy.performance.totalPnL += pnlAmount;
-        
-        if (isWin) {
-          strategy.performance.winRate = (strategy.performance.winRate * (strategy.performance.totalTrades - 1) + 100) / strategy.performance.totalTrades;
-        } else {
-          strategy.performance.winRate = (strategy.performance.winRate * (strategy.performance.totalTrades - 1)) / strategy.performance.totalTrades;
-          strategy.performance.maxDrawdown = Math.min(strategy.performance.maxDrawdown, strategy.performance.totalPnL);
-        }
-        
-        // Update Sharpe ratio (simplified calculation)
-        strategy.performance.sharpeRatio = strategy.performance.totalPnL / Math.max(Math.abs(strategy.performance.maxDrawdown), 1000);
       }
       
     } catch (error) {
       console.error(`Error processing strategy ${strategy.name}:`, error);
       systemStatus.logs.push(`[${new Date().toLocaleTimeString()}] Error in ${strategy.name}: ${error.message}`);
     }
+  }
+};
+
+// 🎯 REAL TRADE EXECUTION FUNCTION
+const executeRealTrade = async (strategy, signal) => {
+  try {
+    console.log(`🚀 Executing REAL TRADE for ${strategy.name}:`);
+    console.log(`   Symbol: ${strategy.symbol}`);
+    console.log(`   Action: ${signal.action}`);
+    console.log(`   Quantity: ${strategy.parameters.quantity}`);
+    console.log(`   Price: ₹${signal.price.toFixed(2)}`);
+    console.log(`   Confidence: ${signal.confidence}%`);
+    
+    // Convert Yahoo Finance symbol to Upstox instrument token
+    const instrumentToken = getInstrumentToken(strategy.symbol);
+    const tradingSymbol = getTradingSymbol(strategy.symbol);
+    
+    // Prepare order data for Upstox API
+    const orderData = {
+      trading_symbol: tradingSymbol,
+      instrument_token: instrumentToken,
+      quantity: strategy.parameters.quantity,
+      price: signal.price,
+      order_type: 'LIMIT', // Use LIMIT order for better control
+      transaction_type: signal.action, // BUY or SELL
+      product: 'MIS', // Intraday for algo trading
+      validity: 'DAY',
+      disclosed_quantity: 0,
+      trigger_price: 0,
+      is_amo: false,
+      slice: true,
+      tag: `algo_${strategy.type}_${Date.now()}`
+    };
+    
+    console.log(`📤 Placing order with data:`, orderData);
+    
+    // Create a mock request object with user token for authentication
+    const mockReq = {
+      user: {
+        access_token: getSystemAccessToken(), // You'll need to implement this
+        user_id: 'algo_system',
+        role: 'parent'
+      }
+    };
+    
+    // Place the actual trade using the existing trading service
+    const response = await placeOrderDirect(orderData, mockReq.user.access_token);
+    
+    if (response.success) {
+      console.log(`✅ Trade executed successfully! Order ID: ${response.order.order_id}`);
+      
+      // Schedule stop loss and take profit orders
+      setTimeout(() => {
+        scheduleStopLossAndTakeProfit(strategy, signal, response.order.order_id);
+      }, 5000); // Wait 5 seconds before placing SL/TP orders
+      
+      return {
+        success: true,
+        orderId: response.order.order_id,
+        message: 'Trade executed successfully'
+      };
+    } else {
+      return {
+        success: false,
+        error: response.error || 'Unknown error'
+      };
+    }
+    
+  } catch (error) {
+    console.error(`❌ Real trade execution failed:`, error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+// Helper function to convert Yahoo Finance symbols to Upstox instrument tokens
+const getInstrumentToken = (yahooSymbol) => {
+  const symbolMap = {
+    '^NSEI': 'NSE_INDEX|Nifty 50',
+    '^NSEBANK': 'NSE_INDEX|Nifty Bank',
+    'RELIANCE.NS': 'NSE_EQ|INE002A01018',
+    'TCS.NS': 'NSE_EQ|INE467B01029',
+    'INFY.NS': 'NSE_EQ|INE009A01021',
+    'HDFCBANK.NS': 'NSE_EQ|INE040A01034',
+    'ICICIBANK.NS': 'NSE_EQ|INE090A01013'
+  };
+  
+  return symbolMap[yahooSymbol] || `NSE_EQ|${yahooSymbol.replace('.NS', '')}`;
+};
+
+// Helper function to get trading symbol
+const getTradingSymbol = (yahooSymbol) => {
+  const symbolMap = {
+    '^NSEI': 'NIFTY',
+    '^NSEBANK': 'BANKNIFTY',
+    'RELIANCE.NS': 'RELIANCE',
+    'TCS.NS': 'TCS',
+    'INFY.NS': 'INFY',
+    'HDFCBANK.NS': 'HDFCBANK',
+    'ICICIBANK.NS': 'ICICIBANK'
+  };
+  
+  return symbolMap[yahooSymbol] || yahooSymbol.replace('.NS', '');
+};
+
+// Function to get system access token (implement based on your auth system)
+const getSystemAccessToken = () => {
+  // In production, you should have a system account or use a valid user token
+  // For now, return a placeholder - you'll need to implement proper token management
+  return process.env.SYSTEM_ACCESS_TOKEN || 'your_system_access_token_here';
+};
+
+// Direct order placement function (bypasses middleware)
+const placeOrderDirect = async (orderData, accessToken) => {
+  try {
+    const axios = (await import('axios')).default;
+    
+    // Use the correct Upstox API endpoint
+    const apiUrl = process.env.UPSTOX_ENV === 'live' 
+      ? 'https://api-hft.upstox.com/v3'
+      : 'https://api-sandbox.upstox.com/v3';
+    
+    const response = await axios.post(`${apiUrl}/order/place`, orderData, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      timeout: 30000
+    });
+    
+    const orderIds = response.data.data?.order_ids || [response.data.data?.order_id];
+    const primaryOrderId = orderIds[0];
+    
+    return {
+      success: true,
+      order: {
+        order_id: primaryOrderId,
+        ...orderData
+      },
+      upstox_response: response.data
+    };
+    
+  } catch (error) {
+    console.error('Direct order placement failed:', error.response?.data || error.message);
+    return {
+      success: false,
+      error: error.response?.data?.message || error.message
+    };
+  }
+};
+
+// Schedule stop loss and take profit orders
+const scheduleStopLossAndTakeProfit = async (strategy, signal, parentOrderId) => {
+  try {
+    const { stopLoss, takeProfit } = strategy.parameters;
+    const currentPrice = signal.price;
+    
+    let stopLossPrice, takeProfitPrice;
+    
+    if (signal.action === 'BUY') {
+      stopLossPrice = currentPrice * (1 - stopLoss / 100);
+      takeProfitPrice = currentPrice * (1 + takeProfit / 100);
+    } else {
+      stopLossPrice = currentPrice * (1 + stopLoss / 100);
+      takeProfitPrice = currentPrice * (1 - takeProfit / 100);
+    }
+    
+    // Place stop loss order
+    const stopLossOrder = {
+      trading_symbol: getTradingSymbol(strategy.symbol),
+      instrument_token: getInstrumentToken(strategy.symbol),
+      quantity: strategy.parameters.quantity,
+      price: stopLossPrice,
+      order_type: 'SL',
+      transaction_type: signal.action === 'BUY' ? 'SELL' : 'BUY',
+      product: 'MIS',
+      validity: 'DAY',
+      trigger_price: stopLossPrice,
+      tag: `sl_${parentOrderId}`
+    };
+    
+    // Place take profit order
+    const takeProfitOrder = {
+      trading_symbol: getTradingSymbol(strategy.symbol),
+      instrument_token: getInstrumentToken(strategy.symbol),
+      quantity: strategy.parameters.quantity,
+      price: takeProfitPrice,
+      order_type: 'LIMIT',
+      transaction_type: signal.action === 'BUY' ? 'SELL' : 'BUY',
+      product: 'MIS',
+      validity: 'DAY',
+      tag: `tp_${parentOrderId}`
+    };
+    
+    const accessToken = getSystemAccessToken();
+    
+    // Place both orders
+    const slResult = await placeOrderDirect(stopLossOrder, accessToken);
+    const tpResult = await placeOrderDirect(takeProfitOrder, accessToken);
+    
+    console.log(`📋 Stop Loss Order: ${slResult.success ? 'Success' : 'Failed'}`);
+    console.log(`📋 Take Profit Order: ${tpResult.success ? 'Success' : 'Failed'}`);
+    
+    const logMessage = `[${new Date().toLocaleTimeString()}] 🛡️ Risk management orders placed for ${strategy.name} - SL: ₹${stopLossPrice.toFixed(2)}, TP: ₹${takeProfitPrice.toFixed(2)}`;
+    systemStatus.logs.push(logMessage);
+    
+  } catch (error) {
+    console.error('Failed to place stop loss/take profit orders:', error);
+    const errorMessage = `[${new Date().toLocaleTimeString()}] ❌ Failed to place risk management orders for ${strategy.name}`;
+    systemStatus.logs.push(errorMessage);
   }
 };
 
@@ -308,7 +533,7 @@ const initializeStrategies = () => {
       id: 'ema_crossover_1',
       name: 'EMA Crossover NIFTY',
       type: 'ema_crossover',
-      symbol: '^NSEI',
+      symbol: 'NIFTY.NS', // Use .NS suffix for Yahoo Finance
       enabled: false,
       parameters: {
         fastPeriod: 9,
@@ -330,7 +555,7 @@ const initializeStrategies = () => {
       id: 'rsi_oversold_1',
       name: 'RSI Oversold BANKNIFTY',
       type: 'rsi_oversold',
-      symbol: '^NSEBANK',
+      symbol: 'BANKNIFTY.NS', // Use .NS suffix for Yahoo Finance
       enabled: false,
       parameters: {
         rsiPeriod: 14,
@@ -339,6 +564,50 @@ const initializeStrategies = () => {
         quantity: 15,
         stopLoss: 1.5,
         takeProfit: 3.0
+      },
+      performance: {
+        totalTrades: 0,
+        winRate: 0,
+        totalPnL: 0,
+        maxDrawdown: 0,
+        sharpeRatio: 0
+      }
+    },
+    {
+      id: 'sma_trend_1',
+      name: 'SMA Trend RELIANCE',
+      type: 'sma_trend',
+      symbol: 'RELIANCE.NS',
+      enabled: false,
+      parameters: {
+        shortPeriod: 20,
+        longPeriod: 50,
+        trendStrength: 1.2,
+        quantity: 10,
+        stopLoss: 2.5,
+        takeProfit: 5.0
+      },
+      performance: {
+        totalTrades: 0,
+        winRate: 0,
+        totalPnL: 0,
+        maxDrawdown: 0,
+        sharpeRatio: 0
+      }
+    },
+    {
+      id: 'bollinger_bands_1',
+      name: 'Bollinger Bands TCS',
+      type: 'bollinger_bands',
+      symbol: 'TCS.NS',
+      enabled: false,
+      parameters: {
+        period: 20,
+        stdDev: 2.0,
+        quantity: 5,
+        stopLoss: 1.8,
+        takeProfit: 3.5,
+        meanReversion: true
       },
       performance: {
         totalTrades: 0,
@@ -361,7 +630,23 @@ initializeStrategies();
 // Cron job for auto trading (runs every minute)
 cron.schedule('* * * * *', () => {
   if (systemStatus.autoTradingEnabled) {
+    console.log(`🤖 [${new Date().toLocaleTimeString()}] Running auto trading cycle...`);
     executeAutoTrading();
+  }
+});
+
+// Additional cron job for more frequent checks (every 30 seconds) during market hours
+cron.schedule('*/30 * * * * *', () => {
+  if (systemStatus.autoTradingEnabled) {
+    const now = new Date();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    
+    // Only run during market hours (9:15 AM to 3:30 PM IST)
+    if ((hour === 9 && minute >= 15) || (hour >= 10 && hour < 15) || (hour === 15 && minute <= 30)) {
+      console.log(`⚡ [${new Date().toLocaleTimeString()}] High-frequency trading check...`);
+      executeAutoTrading();
+    }
   }
 });
 

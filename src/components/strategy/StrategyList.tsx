@@ -112,7 +112,7 @@ const StrategyList: React.FC<StrategyListProps> = ({
               <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
                 <div>
                   <span className="text-gray-400">Symbol:</span>
-                  <p className="text-white font-medium">{strategy.symbol}</p>
+                  <p className="text-white font-medium">{strategy.symbol.replace('.NS', '')}</p>
                 </div>
                 <div>
                   <span className="text-gray-400">Price:</span>
@@ -151,10 +151,10 @@ const StrategyList: React.FC<StrategyListProps> = ({
               <div className="flex items-center justify-between pt-2">
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
                   strategy.enabled 
-                    ? 'bg-green-900 text-green-300 bg-opacity-50' 
+                    ? 'bg-green-900 text-green-300 bg-opacity-50 animate-pulse' 
                     : 'bg-gray-900 text-gray-400 bg-opacity-50'
                 }`}>
-                  {strategy.enabled ? 'ACTIVE' : 'INACTIVE'}
+                  {strategy.enabled ? '🔴 LIVE TRADING' : 'INACTIVE'}
                 </span>
                 <span className="text-gray-400 text-xs">
                   {strategy.performance.totalTrades} trades
